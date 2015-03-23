@@ -38,10 +38,25 @@ for i,status in enumerate(tweep['data']):
             df.loc[i,'url'] = ' '.join([url['expanded_url'] for url in status['entities']['urls']])
         except:
             df.loc[i,'url'] = ''
-        
+
 # 60 tweets have no URL for nytimes <- len(df[df.url==''])
 # 605 tweets have no URL for cnn <- len(df[df.url==''])
 # 6 tweets have 2+ URLs for nytime <- len(df[df.url.str.contains(' ')])
 # 212 tweets have 2+ URLs for cnn <- len(df[df.url.str.contains(' ')])
 
 df.to_csv("data/cnn.csv",encoding='utf-8',index=False)
+
+def get_url_list():
+    df = pd.read_csv('data/nytimes.csv',na_filter=False)
+    multip = df[df.url.str.contains(' ')].url
+    multip
+    multi = multip.apply(lambda x: x.split()[1])
+    #ul.extend([j for i in l for j in i]) #flatten and extend
+    single = df[~df.url.str.contains('[\s]')].url
+    single = single[single.str.contains('http')]
+    ul = []
+    ul.extend(multi.tolist())
+    ul.extend(single.tolist())
+    #3 bitly URLs <- df[~df.url.str.contains('nyt')].url
+    pd.Series(ul).to_csv('data/urls_nyt.csv',index=False)
+
