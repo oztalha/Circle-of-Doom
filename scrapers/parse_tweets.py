@@ -46,7 +46,7 @@ for i,status in enumerate(tweep['data']):
 
 df.to_csv("data/cnn.csv",encoding='utf-8',index=False)
 
-def get_url_list():
+def nyt_url_list():
     df = pd.read_csv('data/nytimes.csv',na_filter=False)
     multip = df[df.url.str.contains(' ')].url
     multip
@@ -59,4 +59,17 @@ def get_url_list():
     ul.extend(single.tolist())
     #3 bitly URLs <- df[~df.url.str.contains('nyt')].url
     pd.Series(ul).to_csv('data/urls_nyt.csv',index=False)
+
+def cnn_url_list():
+    df = pd.read_csv('data/cnn.csv',na_filter=False)
+    multip = df[df.url.str.contains(' ')].url
+    multip
+    multi = multip.apply(lambda x: x.split())
+    single = df[~df.url.str.contains('[\s]')].url
+    single = single[single.str.contains('http')]
+    ul = []
+    ul.extend([j for i in multi.tolist() for j in i]) #flatten and extend
+    ul.extend(single.tolist())
+    ul = [url for url in ul if 'cnn' in url or 'CNN' in url]
+    pd.Series(ul).to_csv('data/urls_cnn.csv',index=False)
 
