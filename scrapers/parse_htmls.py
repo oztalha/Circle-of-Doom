@@ -9,17 +9,33 @@ import pandas as pd
 from bs4 import BeautifulSoup
 import os
 
-"""
-# for testing on a sample of a kind
-html = '1EWBvGW%0D'
-f = open('htmls/cnn/'+html)
-soup = BeautifulSoup(f, "lxml")
-title = soup.title.text
-dt = pd.to_datetime(soup.find(class_="update-time").text[8:])
-href = soup.find(itemprop="url")['content']
-newstxt = soup.find('section',id="body-text").text
-"""
+# 328 URLs could not be parsed:
+# oddset = set([odd.split('%')[0] for odd in odds])
+# 328 <- len(oddset)
 
+def get_CNN_money(remaining):
+    df = pd.DataFrame(columns=('dt', 'title', 'href', 'newstxt'))
+    errors = []
+    for i,html in enumerate(remaining):
+        try:
+            f = open('htmls/cnn/'+html)
+            soup = BeautifulSoup(f, "lxml")
+            title = soup.title.text
+            dt = pd.to_datetime(soup.head.find('meta',{'name':'date'})['content'])
+            href = soup.head.find('link',{'rel':'canonical'})['href']
+            newstxt = soup.find('div',id='storytext').text
+            df.loc[len(df)+1]=[dt, title, href, newstxt]
+            print (len(errors),dt, title, href)
+            f.close()
+        except:
+            errors.append((i,html))
+
+    odds = list(zip(*errors))[1]
+    df.to_csv("data/CNN-money.csv",encoding='utf-8',index=False)
+    pd.Series(odds).to_csv('data/odd_urls_cnn.csv',index=False)
+    return odds
+
+    
 def get_CNN_news(others):
     df = pd.DataFrame(columns=('dt', 'title', 'href', 'newstxt'))
     errors = []

@@ -44,7 +44,8 @@ for i,status in enumerate(tweep['data']):
 # 6 tweets have 2+ URLs for nytime <- len(df[df.url.str.contains(' ')])
 # 212 tweets have 2+ URLs for cnn <- len(df[df.url.str.contains(' ')])
 
-df.to_csv("data/cnn.csv",encoding='utf-8',index=False)
+#df.to_csv("data/nytimes-tweets.csv",encoding='utf-8',index=False)
+df.to_csv("data/cnn-tweets.csv",encoding='utf-8',index=False)
 
 def nyt_url_list():
     df = pd.read_csv('data/nytimes.csv',na_filter=False)
