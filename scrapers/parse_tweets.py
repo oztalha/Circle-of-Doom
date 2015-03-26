@@ -39,16 +39,11 @@ for i,status in enumerate(tweep['data']):
         except:
             df.loc[i,'url'] = ''
 
-# 60 tweets have no URL for nytimes <- len(df[df.url==''])
-# 605 tweets have no URL for cnn <- len(df[df.url==''])
-# 6 tweets have 2+ URLs for nytime <- len(df[df.url.str.contains(' ')])
-# 212 tweets have 2+ URLs for cnn <- len(df[df.url.str.contains(' ')])
-
-#df.to_csv("data/nytimes-tweets.csv",encoding='utf-8',index=False)
-df.to_csv("data/cnn-tweets.csv",encoding='utf-8',index=False)
+#df.to_csv("data/NYT-tweets.csv",encoding='utf-8',index=False)
+df.to_csv("data/CNN-tweets.csv",encoding='utf-8',index=False)
 
 def nyt_url_list():
-    df = pd.read_csv('data/nytimes.csv',na_filter=False)
+    df = pd.read_csv('data/NYT-tweets.csv',na_filter=False)
     multip = df[df.url.str.contains(' ')].url
     multip
     multi = multip.apply(lambda x: x.split()[1])

@@ -24,6 +24,89 @@ newstxt = '\n'.join([text.text for text in soup.findAll('p',{'itemprop':'article
 print(newstxt)
 """
 
+
+def combine():
+    """
+    combine fi and tw using two methods:
+    m1: inner join hrefs
+    m2: inner join filename with url in tw
+    """
+    fi = pd.read_csv("data/nyt-filename-url.csv")
+    tw = pd.read_csv('data/NYT-tweets.csv',na_filter=False)
+    tw = tw.rename(columns={'url':'href'})
+    m1 = fi.merge(tw, on='href', how='inner')
+    #(48, 9) <- m1.shape
+    
+    tw2 = tw.copy()
+    tw2['url'] = tw2.href.str.replace('^.*/','')
+    m2 = fi.merge(tw2, left_on='filename', right_on='url', how='inner')
+    #(2561, 11) <- m2.shape
+    m2.to_csv('data/nyt-id-url.csv',columns=['twid','href_x'],header=['twid','href'],index=False)
+    
+    #m2.merge(m1,left_on='url',right_on='filename',how='inner').shape
+    #(45, 20)
+
+    fi = pd.read_csv("data/cnn-filename-url.csv")
+    tw = pd.read_csv('data/cnn-tweets.csv',na_filter=False)
+    tw = tw.rename(columns={'url':'href'})
+    m1 = fi.merge(tw, on='href', how='inner')
+    #(18, 9) <- m1.shape
+    
+    #method2 on single URLs and on first URL (in case of multiple urls)
+    tw2 = tw.copy()
+    tw2['url'] = tw2.href.str.replace('^.*/','')
+    m2 = fi.merge(tw2, left_on='filename', right_on='url', how='inner')
+    #(2651, 11) <- m2.shape
+    
+    #method2 on 2nd URL (in case of multiple URLs)
+    multip = tw[tw.href.str.contains(' ')]
+    multip['url'] = multip.apply(lambda x: pd.Series(x.href.split()[0]),axis=1)
+    multip['url'] = multip['url'].str.replace('^.*/','')
+    m22 = fi.merge(multip, left_on='filename', right_on='url', how='inner')
+    #(268, 11) <- m22.shape
+    m2 = m2.append(m22)
+    m2.to_csv('data/cnn-id-url.csv',columns=['twid','href_x'],header=['twid','href'],index=False)
+    #(2919, 11)<- m2.shape
+    
+    #multi = multip.apply(lambda x: x.append(pd.Series((x.href.split()[0],x.href.split()[1]))),axis=1)
+    #multi = multi.rename(columns={0:'url1',1:'url2'})
+
+
+def get_filename_url_tuples():
+    
+    errors = []
+    df = pd.DataFrame(columns=('src','filename', 'href','title'))
+    
+    for src in ('nyt','cnn'):
+        path='htmls/'+src+'/'
+        for i,filename in enumerate(os.listdir(path)):
+            try:
+                f = open(path+filename,encoding='utf8')
+                soup = BeautifulSoup(f, "lxml")
+                title = soup.title.text
+                href = soup.head.find('link',{'rel':'canonical'})['href']
+                df.loc[len(df)+1]=[src, filename, href, title]
+                print(src, filename, href, title)
+            except:
+                errors.append((src,filename))    
+    
+    pd.DataFrame(errors).to_csv('data/erroneous_html.csv',index=False, header=['src','filename'])
+    df.to_csv("data/filename-url.csv",encoding='utf-8',index=False)
+    
+    nyt = df[df.src=='nyt']
+    nyt['filename'] = nyt['filename'].str.replace('\.2$','')
+    nyt['filename'] = nyt['filename'].str.replace('\.1$','')
+    nyt['filename'] = nyt['filename'].str.replace('%0D$','')
+    nyt.to_csv("data/nyt-filename-url.csv",encoding='utf-8',index=False)
+    
+    cnn = df[df.src=='cnn']
+    cnn['filename'] = cnn['filename'].str.replace('\.2$','')
+    cnn['filename'] = cnn['filename'].str.replace('\.1$','')
+    cnn['filename'] = cnn['filename'].str.replace('%0D$','')
+    cnn.to_csv("data/cnn-filename-url.csv",encoding='utf-8',index=False)
+
+
+
 def get_NYT_news():
     df = pd.DataFrame(columns=('dt', 'title', 'href', 'newstxt'))
     errors = []
