@@ -443,3 +443,63 @@ def get_WP_news():
     #19 <- len(df[df.newstxt==''].href)
     df.to_csv("data/washingtonpost-news.csv",encoding='utf-8',index=False)
     pd.Series(others).to_csv('data/other_urls_washingtonpost.csv',index=False)
+    
+    
+def get_CBS_news():
+    df = pd.DataFrame(columns=('fname','dt', 'title', 'href', 'newstxt'))
+    errors = []
+    path = 'htmls/CBSNews/'
+    for i,html in enumerate(os.listdir(path)):
+        try:
+            f = open(path+html,encoding='utf-8')
+            soup = BeautifulSoup(f, "lxml")
+            # kill all script and style elements
+            for script in soup(["script", "style"]):
+                script.extract()    # rip it out
+            title = soup.title.text
+            href = soup.head.find('link',{'rel':'canonical'})['href']
+            dt = pd.to_datetime(soup.find('span',{'class':'time'}).text)
+            texts = soup.find('div',{'id':'article-entry'}).findAll('p')
+            newstxt = '\n\n'.join([text.text.strip() for text in texts if not text.text.isspace()])
+
+            df.loc[len(df)+1]=[html, dt, title, href, newstxt]
+            print ('[OK]:',html, dt, title, href)
+            f.close()
+        except:
+            errors.append((i,html))
+            print ('[ERROR]:',html, dt, title, href)
+
+    others = list(zip(*errors))[1]
+    #19 <- len(df[df.newstxt==''].href)
+    df.to_csv("data/CBSNews-news.csv",encoding='utf-8',index=False)
+    pd.Series(others).to_csv('data/other_urls_CBSNews.csv',index=False)
+    
+    
+def get_NBC_news():
+    df = pd.DataFrame(columns=('fname','dt', 'title', 'href', 'newstxt'))
+    errors = []
+    path = 'htmls/NBCNews/'
+    for i,html in enumerate(os.listdir(path)):
+        try:
+            f = open(path+html,encoding='utf-8')
+            soup = BeautifulSoup(f, "lxml")
+            # kill all script and style elements
+            for script in soup(["script", "style"]):
+                script.extract()    # rip it out
+            title = soup.title.text
+            href = soup.head.find('link',{'rel':'canonical'})['href']
+            dt = pd.to_datetime(soup.head.find('meta',{'name':'DC.date.issued'})['content'])
+            texts = soup.find('div',{'class':'article-body'}).findAll('p')
+            newstxt = '\n\n'.join([text.text.strip() for text in texts if not text.text.isspace()])
+
+            df.loc[len(df)+1]=[html, dt, title, href, newstxt]
+            print ('[OK]:',html, dt, title, href)
+            f.close()
+        except:
+            errors.append((i,html))
+            print ('[ERROR]:',html, dt, title, href)
+
+    others = list(zip(*errors))[1]
+    #19 <- len(df[df.newstxt==''].href)
+    df.to_csv("data/NBCNews-news.csv",encoding='utf-8',index=False)
+    pd.Series(others).to_csv('data/other_urls_NBCNews.csv',index=False)

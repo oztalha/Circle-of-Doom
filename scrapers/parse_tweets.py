@@ -14,11 +14,23 @@ import json
 import pandas as pd
 import glob
 import os
-import urllib
+import requests
 
 path="data/tweets/"
-filenames = glob.glob(path+'*.json')
+filenames = glob.glob(path+'*News.json')
 for filename in filenames:
+    json_to_csv(filename)
+
+filenames = glob.glob(path+'*News.csv')
+articles = {'abc':'abcn.ws', 'ap':'apne','washingtonpost':'wapo.st|washingtonpost',
+            'bbcworld':'bbc','huffingtonpost':'huff','foxnews':'fxn.ws|foxnews',
+            'time':'ti.?me','NBCNews':'nbc|tinyurl','CBSNews':'cbsn'}
+for filename in filenames:
+    url_download(filename,articles)
+        
+        
+def json_to_csv(filename):
+    """ json to csv """
     with open(filename, encoding='utf-8') as f:
         tweep = json.load(f)
         df = pd.DataFrame(columns=['twid', 'tweep', 'twtext', 'fav', 'rt', 'url'])
@@ -46,10 +58,9 @@ for filename in filenames:
                 except:
                     df.loc[i,'url'] = ''
         df.to_csv(path+tweep['parameters']['screen_name']+'.csv',encoding='utf-8',index=False)
-#df.to_csv("data/NYT-tweets.csv",encoding='utf-8',index=False)
 
 
-def url_download():
+def url_download(filename,articles):
     """
     apne,
     download.sh (single liner): wget -O $2 $1
@@ -58,47 +69,36 @@ def url_download():
         ./download.sh $url
     done < list_of_urls
     """    
-    import pandas as pd
-    import glob
-    import os
-    #import urllib
-    import requests
-    path="data/tweets/"
-    filenames = glob.glob(path+'*.csv')
-    articles = {'abc':'abcn.ws', 'ap':'apne','washingtonpost':'wapo.st|washingtonpost',
-                'bbcworld':'bbc','huffingtonpost':'huff','foxnews':'fxn.ws|foxnews',
-                'time':'ti.?me'}
-    for filename in filenames:
-        outlet = filename.split('\\')[1].split('.')[0]
-        df = pd.read_csv(filename,na_filter=False)
-        single = df[~df.url.str.contains('[\s]')].url
-        multip = df[df.url.str.contains('[\s]')].url
-        multi0 = multip.apply(lambda x: x.split()[0])
-        multi1 = multip.apply(lambda x: x.split()[1])
-        ul = []
-        for df in single,multi0,multi1:
-            df = df[df.str.contains(articles[outlet])]
-            ul.extend(df)
-        print(outlet,len(ul))
+    outlet = filename.split('\\')[1].split('.')[0]
+    df = pd.read_csv(filename,na_filter=False)
+    single = df[~df.url.str.contains('[\s]')].url
+    multip = df[df.url.str.contains('[\s]')].url
+    multi0 = multip.apply(lambda x: x.split()[0])
+    multi1 = multip.apply(lambda x: x.split()[1])
+    ul = []
+    for df in single,multi0,multi1:
+        df = df[df.str.contains(articles[outlet])]
+        ul.extend(df)
+    print(outlet,len(ul))
 
-        #start downloading process
-        directory = 'htmls/'+outlet+'/'
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-        for i,url in enumerate(ul):
-            fname = url.split('/')[-1]
-            if os.path.exists(directory+fname):
-                continue
-            print(i,directory+fname)
-            try:
-                resource = requests.get(url,timeout=5) #urllib.request.urlopen(url,timeout=5)
-                # content = resource.read().decode(resource.headers.get_content_charset())
-                # encoding = resource.headers.get_content_charset()                
-                with open(directory+fname,'w',encoding=resource.encoding) as w: 
-                    w.write(resource.text) #content
-            except Exception as e:
-                print(e)
-                print(url)
+    #start downloading process
+    directory = 'htmls/'+outlet+'/'
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    for i,url in enumerate(ul):
+        fname = url.split('/')[-1]
+        if os.path.exists(directory+fname):
+            continue
+        print(i,directory+fname)
+        try:
+            resource = requests.get(url,timeout=5) #urllib.request.urlopen(url,timeout=5)
+            # content = resource.read().decode(resource.headers.get_content_charset())
+            # encoding = resource.headers.get_content_charset()                
+            with open(directory+fname,'w',encoding=resource.encoding) as w: 
+                w.write(resource.text) #content
+        except Exception as e:
+            print(e)
+            print(url)
         # pd.Series(ul).to_csv(filename.split('.')[0]+'txt',index=False)
     
 
