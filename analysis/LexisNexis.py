@@ -10,8 +10,9 @@ import numpy as np
 import textblob as tb
 import os
 import time
+import re
 
-outlets = "AP ABC NBCNews WPOST CBSNews FoxNews CNN".split()
+outlets = "AP ABC NBCNews WPOST CBSNews FoxNews CNN NYT".split()
 df = pd.DataFrame(columns=['outlet','dt','sp'])
 dailies = []
 for outlet in outlets:
@@ -26,13 +27,15 @@ for outlet in outlets:
             if 'dt' in day and dt == day['dt']:
                 day['news'] += news
             else:
-                day['outlet'] = outlet
-                day['dt'] = dt
-                day['sp'] = tb.TextBlob(news).sentiment.polarity
-                dailies.append(day)
-                day = {}
+                stories = re.compile("\d+ of \d+ DOCUMENTS").split(news)
+                for story in stories:
+                    day['outlet'] = outlet
+                    day['dt'] = dt
+                    day['sp'] = tb.TextBlob(story).sentiment.polarity
+                    dailies.append(day)
+                    day = {}
         except Exception as e:
-            print(path+daily)
+            print(e,path+daily)
             
             
 df=pd.DataFrame(dailies)   
